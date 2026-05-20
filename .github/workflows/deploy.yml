@@ -1,0 +1,54 @@
+name: Build & Push to ECR
+
+on:
+  push:
+    branches: [dev, staging]
+    tags: ['prd-*']
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REGISTRY: 010928206585.dkr.ecr.ap-southeast-1.amazonaws.com/wspn-ai
+
+jobs:
+  build-w-newapi:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Write VERSION
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "${GITHUB_REF#refs/tags/}" > VERSION
+          else
+            echo "${GITHUB_REF_NAME}-$(git rev-parse --short HEAD)" > VERSION
+          fi
+          echo "VERSION=$(cat VERSION)"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set short sha
+        id: sha_short
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build, tag, and push w-newapi to ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.ref_type == 'tag' && github.ref_name || format('{0}-{1}', github.ref_name, steps.sha_short.outputs.sha_short) }}
+        run: |
+          docker build -t $ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG" >> $GITHUB_OUTPUT
