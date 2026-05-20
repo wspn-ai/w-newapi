@@ -52,3 +52,4 @@ jobs:
           docker build -t $ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG .
           docker push $ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/wspn-ai/w-newapi:$IMAGE_TAG" >> $GITHUB_OUTPUT
+#test
