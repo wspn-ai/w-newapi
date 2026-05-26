@@ -191,34 +191,69 @@ func (c *WCheckoutClient) accessToken(ctx context.Context) (string, error) {
 	return c.cachedToken, nil
 }
 
+// signRequest computes the WCheckout request signature documented at
+// https://developer.wcheckout.app/7441280m0:
+//
+//	signature = Base64(HMAC_SHA512(signKey, METHOD + TIMESTAMP + URI + QueryString + Body))
+//
+// QueryString is the raw query (no leading '?'), Body is the raw JSON payload
+// or empty for requests without a body. TIMESTAMP is the same millisecond
+// value sent in the TIMESTAMP header.
+func (c *WCheckoutClient) signRequest(method, path, queryStr string, bodyBytes []byte, timestamp string) string {
+	mac := hmac.New(sha512.New, []byte(c.signKey))
+	mac.Write([]byte(method))
+	mac.Write([]byte(timestamp))
+	mac.Write([]byte(path))
+	mac.Write([]byte(queryStr))
+	mac.Write(bodyBytes)
+	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+}
+
 // doRequest issues an authenticated REST call and decodes the response into
-// out. body may be nil for GET requests.
+// out. body may be nil for GET requests. Every call carries both the
+// Authorization Bearer token AND the WCheckout SIGNATURE/TIMESTAMP headers;
+// the gateway rejects unsigned calls with retcode=00006 "Access denied:
+// Missing header [SIGNATURE]".
 func (c *WCheckoutClient) doRequest(ctx context.Context, method, path string, query url.Values, body interface{}, out interface{}) error {
 	token, err := c.accessToken(ctx)
 	if err != nil {
 		return err
 	}
 
-	endpoint := c.baseURL + path
+	queryStr := ""
 	if len(query) > 0 {
-		endpoint += "?" + query.Encode()
+		queryStr = query.Encode()
+	}
+	endpoint := c.baseURL + path
+	if queryStr != "" {
+		endpoint += "?" + queryStr
 	}
 
-	var bodyReader io.Reader
+	var bodyBytes []byte
 	if body != nil {
 		raw, mErr := common.Marshal(body)
 		if mErr != nil {
 			return fmt.Errorf("序列化请求体失败: %w", mErr)
 		}
-		bodyReader = bytes.NewReader(raw)
+		bodyBytes = raw
+	}
+
+	var bodyReader io.Reader
+	if bodyBytes != nil {
+		bodyReader = bytes.NewReader(bodyBytes)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, endpoint, bodyReader)
 	if err != nil {
 		return err
 	}
+
+	timestamp := strconv.FormatInt(time.Now().UnixMilli(), 10)
+	signature := c.signRequest(method, path, queryStr, bodyBytes, timestamp)
 	req.Header.Set("Authorization", "Bearer "+token)
-	if body != nil {
+	req.Header.Set("SIGNATURE", signature)
+	req.Header.Set("TIMESTAMP", timestamp)
+	if bodyBytes != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
