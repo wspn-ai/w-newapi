@@ -459,6 +459,11 @@ export function RechargeFormCard({
                                 src={tok.icon}
                                 alt={tok.name}
                                 className='h-4 w-4 object-contain'
+                                onError={(e) => {
+                                  ;(
+                                    e.currentTarget as HTMLImageElement
+                                  ).style.display = 'none'
+                                }}
                               />
                             ) : (
                               getPaymentIcon('waffo')
