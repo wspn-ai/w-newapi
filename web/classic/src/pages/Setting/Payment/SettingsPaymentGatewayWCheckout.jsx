@@ -37,17 +37,20 @@ import { BookOpen } from 'lucide-react';
 
 const toBoolean = (value) => value === true || value === 'true';
 
+// Per WCheckout docs:
+//   Ethereum: USDT, USDC, WUSD  (prefix ETH_)
+//   TRON:     USDT, USDC        (prefix TRX_, not TRON_)
+//   Solana:   USDT, USDC        (prefix SOL_)
+// WUSD is currently Ethereum-only.
 const DEFAULT_TOKENS = JSON.stringify(
   [
-    { name: 'USDT (Ethereum)', token: 'ETH_USDT', icon: '' },
-    { name: 'USDC (Ethereum)', token: 'ETH_USDC', icon: '' },
     { name: 'WUSD (Ethereum)', token: 'ETH_WUSD', icon: '' },
-    { name: 'USDT (TRON)', token: 'TRON_USDT', icon: '' },
-    { name: 'USDC (TRON)', token: 'TRON_USDC', icon: '' },
-    { name: 'WUSD (TRON)', token: 'TRON_WUSD', icon: '' },
-    { name: 'USDT (Solana)', token: 'SOL_USDT', icon: '' },
+    { name: 'USDC (Ethereum)', token: 'ETH_USDC', icon: '' },
+    { name: 'USDC (TRON)', token: 'TRX_USDC', icon: '' },
     { name: 'USDC (Solana)', token: 'SOL_USDC', icon: '' },
-    { name: 'WUSD (Solana)', token: 'SOL_WUSD', icon: '' },
+    { name: 'USDT (Ethereum)', token: 'ETH_USDT', icon: '' },
+    { name: 'USDT (TRON)', token: 'TRX_USDT', icon: '' },
+    { name: 'USDT (Solana)', token: 'SOL_USDT', icon: '' },
   ],
   null,
   2,

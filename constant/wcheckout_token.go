@@ -17,14 +17,17 @@ type WCheckoutToken struct {
 // Icon paths are intentionally empty — frontends render a fallback glyph when
 // Icon is blank. Administrators may attach custom icon URLs/paths via the
 // admin token editor.
+// Identifiers and supported chain/token matrix per WCheckout docs:
+//   Ethereum: USDT, USDC, WUSD  (prefix "ETH_")
+//   TRON:     USDT, USDC        (prefix "TRX_", not "TRON_")
+//   Solana:   USDT, USDC        (prefix "SOL_")
+// WUSD (WSPN-issued) is currently Ethereum-only.
 var DefaultWCheckoutTokens = []WCheckoutToken{
-	{Name: "USDT (Ethereum)", Token: "ETH_USDT"},
-	{Name: "USDC (Ethereum)", Token: "ETH_USDC"},
 	{Name: "WUSD (Ethereum)", Token: "ETH_WUSD"},
-	{Name: "USDT (TRON)", Token: "TRON_USDT"},
-	{Name: "USDC (TRON)", Token: "TRON_USDC"},
-	{Name: "WUSD (TRON)", Token: "TRON_WUSD"},
-	{Name: "USDT (Solana)", Token: "SOL_USDT"},
+	{Name: "USDC (Ethereum)", Token: "ETH_USDC"},
+	{Name: "USDC (TRON)", Token: "TRX_USDC"},
 	{Name: "USDC (Solana)", Token: "SOL_USDC"},
-	{Name: "WUSD (Solana)", Token: "SOL_WUSD"},
+	{Name: "USDT (Ethereum)", Token: "ETH_USDT"},
+	{Name: "USDT (TRON)", Token: "TRX_USDT"},
+	{Name: "USDT (Solana)", Token: "SOL_USDT"},
 }

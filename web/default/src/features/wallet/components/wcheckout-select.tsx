@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { ArrowLeft, Loader2 } from 'lucide-react'
@@ -25,32 +25,38 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useTopupInfo } from '../hooks/use-topup-info'
 import { useWCheckoutPayment } from '../hooks/use-wcheckout-payment'
-import type { WCheckoutToken } from '../types'
 
 interface WCheckoutSelectProps {
   amount: number
 }
 
-// Chain extracted from token identifier "{CHAIN}_{TOKEN}". Falls back to
-// "Other" so tokens with unexpected formats still render.
-function getChain(tokenId: string): string {
-  const idx = tokenId.indexOf('_')
-  return idx > 0 ? tokenId.slice(0, idx) : 'Other'
-}
+// Token-type order requested by product: WUSD first, then USDC, then USDT.
+const TOKEN_TYPE_ORDER = ['WUSD', 'USDC', 'USDT'] as const
+type TokenType = (typeof TOKEN_TYPE_ORDER)[number]
 
-function chainLabel(chain: string, t: (key: string) => string): string {
-  switch (chain.toUpperCase()) {
-    case 'ETH':
-      return t('Ethereum')
-    case 'TRON':
-      return t('TRON')
-    case 'SOL':
-      return t('Solana')
-    default:
-      return chain
-  }
+// Chain identifier prefixes per WCheckout docs.
+const CHAIN_LABELS: Record<string, string> = {
+  ETH: 'Ethereum',
+  TRX: 'TRON',
+  SOL: 'Solana',
+}
+const CHAIN_ORDER = ['ETH', 'TRX', 'SOL']
+
+// Split "ETH_USDT" → { chain: "ETH", type: "USDT" }.
+function splitToken(id: string): { chain: string; type: string } {
+  const idx = id.indexOf('_')
+  if (idx <= 0) return { chain: '', type: id }
+  return { chain: id.slice(0, idx), type: id.slice(idx + 1) }
 }
 
 export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
@@ -59,39 +65,89 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
   const { topupInfo, loading } = useTopupInfo()
   const { processing, processWCheckoutPayment } = useWCheckoutPayment()
 
-  const grouped = useMemo(() => {
-    const tokens = topupInfo?.wcheckout_tokens ?? []
-    const map = new Map<string, WCheckoutToken[]>()
-    for (const tok of tokens) {
-      const chain = getChain(tok.token)
-      const list = map.get(chain) ?? []
-      list.push(tok)
-      map.set(chain, list)
+  // Group admin-enabled tokens by token type, keeping a list of chains
+  // available for each type.
+  const tokensByType = useMemo(() => {
+    const map = new Map<string, string[]>()
+    for (const tok of topupInfo?.wcheckout_tokens ?? []) {
+      const { chain, type } = splitToken(tok.token)
+      if (!chain || !type) continue
+      const list = map.get(type) ?? []
+      if (!list.includes(chain)) list.push(chain)
+      map.set(type, list)
     }
-    // Stable order: ETH, TRON, SOL, then anything else alphabetical.
-    const preferred = ['ETH', 'TRON', 'SOL']
-    return Array.from(map.entries()).sort(([a], [b]) => {
-      const ai = preferred.indexOf(a)
-      const bi = preferred.indexOf(b)
-      if (ai === -1 && bi === -1) return a.localeCompare(b)
-      if (ai === -1) return 1
-      if (bi === -1) return -1
-      return ai - bi
-    })
+    // Sort chains within each type using canonical order.
+    for (const [k, v] of map) {
+      v.sort((a, b) => {
+        const ai = CHAIN_ORDER.indexOf(a)
+        const bi = CHAIN_ORDER.indexOf(b)
+        if (ai === -1 && bi === -1) return a.localeCompare(b)
+        if (ai === -1) return 1
+        if (bi === -1) return -1
+        return ai - bi
+      })
+      map.set(k, v)
+    }
+    return map
   }, [topupInfo?.wcheckout_tokens])
+
+  // Visible token-type tiles: requested order WUSD → USDC → USDT, plus
+  // anything else the admin configured that doesn't fit the canonical set.
+  const tokenTypes = useMemo(() => {
+    const ordered: string[] = []
+    for (const tt of TOKEN_TYPE_ORDER) {
+      if (tokensByType.has(tt)) ordered.push(tt)
+    }
+    for (const tt of tokensByType.keys()) {
+      if (!ordered.includes(tt)) ordered.push(tt)
+    }
+    return ordered
+  }, [tokensByType])
+
+  const [selectedType, setSelectedType] = useState<string>('')
+  const [selectedChain, setSelectedChain] = useState<string>('')
+
+  // Initialise selections once topupInfo lands.
+  useEffect(() => {
+    if (!selectedType && tokenTypes.length > 0) {
+      const first = tokenTypes[0]
+      setSelectedType(first)
+      const chains = tokensByType.get(first) ?? []
+      setSelectedChain(chains[0] ?? '')
+    }
+  }, [tokenTypes, tokensByType, selectedType])
+
+  const availableChains = useMemo(
+    () => (selectedType ? tokensByType.get(selectedType) ?? [] : []),
+    [selectedType, tokensByType]
+  )
+
+  // When user switches token type, reset chain to a valid one for that type.
+  const handleTypeChange = (next: string) => {
+    setSelectedType(next)
+    const chains = tokensByType.get(next) ?? []
+    if (!chains.includes(selectedChain)) {
+      setSelectedChain(chains[0] ?? '')
+    }
+  }
 
   const enabled = topupInfo?.enable_wcheckout_topup === true
   const minTopup = topupInfo?.wcheckout_min_topup ?? 1
   const amountValid = amount >= minTopup
+  const tokenId =
+    selectedChain && selectedType ? `${selectedChain}_${selectedType}` : ''
+
+  const handlePay = async () => {
+    if (!tokenId || !amountValid || processing) return
+    await processWCheckoutPayment(amount, tokenId)
+  }
 
   const handleBack = () => {
     void navigate({ to: '/wallet' })
   }
 
-  const handleSelect = async (tok: WCheckoutToken) => {
-    if (!amountValid || processing) return
-    await processWCheckoutPayment(amount, tok.token)
-  }
+  const chainLabel = (c: string) =>
+    CHAIN_LABELS[c] ? t(CHAIN_LABELS[c]) : c
 
   return (
     <SectionPageLayout>
@@ -133,58 +189,94 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
               )}
 
               {loading ? (
-                <div className='grid grid-cols-2 gap-3 sm:grid-cols-3'>
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <Skeleton key={i} className='h-12 rounded-lg' />
-                  ))}
+                <div className='space-y-3'>
+                  <Skeleton className='h-12 w-full rounded-lg' />
+                  <Skeleton className='h-12 w-full rounded-lg' />
                 </div>
               ) : !enabled ? (
                 <Alert>
                   <AlertDescription>
-                    {t('WCheckout is not enabled. Please contact administrator.')}
+                    {t(
+                      'WCheckout is not enabled. Please contact administrator.'
+                    )}
                   </AlertDescription>
                 </Alert>
-              ) : grouped.length === 0 ? (
+              ) : tokenTypes.length === 0 ? (
                 <Alert>
                   <AlertDescription>
                     {t('No payment tokens are currently enabled.')}
                   </AlertDescription>
                 </Alert>
               ) : (
-                grouped.map(([chain, tokens]) => (
-                  <div key={chain} className='space-y-2'>
-                    <h3 className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                      {chainLabel(chain, t)}
-                    </h3>
-                    <div className='grid grid-cols-2 gap-2 sm:grid-cols-3'>
-                      {tokens.map((tok) => (
+                <>
+                  <div className='space-y-2'>
+                    <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                      {t('Stablecoin')}
+                    </Label>
+                    <div className='grid grid-cols-3 gap-2'>
+                      {tokenTypes.map((tt) => (
                         <Button
-                          key={tok.token}
-                          variant='outline'
-                          className='h-12 justify-start gap-2 px-3'
-                          disabled={!amountValid || processing}
-                          onClick={() => handleSelect(tok)}
+                          key={tt}
+                          variant={selectedType === tt ? 'default' : 'outline'}
+                          onClick={() => handleTypeChange(tt)}
+                          disabled={processing}
+                          className='h-11'
                         >
-                          {processing ? (
-                            <Loader2 className='h-4 w-4 animate-spin' />
-                          ) : tok.icon ? (
-                            <img
-                              src={tok.icon}
-                              alt={tok.name}
-                              className='h-5 w-5 object-contain'
-                              onError={(e) => {
-                                ;(
-                                  e.currentTarget as HTMLImageElement
-                                ).style.display = 'none'
-                              }}
-                            />
-                          ) : null}
-                          <span className='truncate text-left'>{tok.name}</span>
+                          {tt}
                         </Button>
                       ))}
                     </div>
                   </div>
-                ))
+
+                  <div className='space-y-2'>
+                    <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                      {t('Chain')}
+                    </Label>
+                    <Select
+                      value={selectedChain}
+                      onValueChange={setSelectedChain}
+                      disabled={processing || availableChains.length === 0}
+                    >
+                      <SelectTrigger className='w-full'>
+                        <SelectValue placeholder={t('Select a chain')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableChains.map((c) => (
+                          <SelectItem key={c} value={c}>
+                            {chainLabel(c)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {availableChains.length === 1 && (
+                      <p className='text-muted-foreground text-xs'>
+                        {t(
+                          '{{token}} is only available on {{chain}}.',
+                          {
+                            token: selectedType,
+                            chain: chainLabel(availableChains[0]),
+                          }
+                        )}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    onClick={handlePay}
+                    disabled={!tokenId || !amountValid || processing}
+                    className='w-full'
+                    size='lg'
+                  >
+                    {processing ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        {t('Processing...')}
+                      </>
+                    ) : (
+                      t('Pay with {{token}}', { token: tokenId || '...' })
+                    )}
+                  </Button>
+                </>
               )}
             </CardContent>
           </Card>
