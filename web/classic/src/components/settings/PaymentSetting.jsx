@@ -25,6 +25,7 @@ import SettingsPaymentGatewayStripe from '../../pages/Setting/Payment/SettingsPa
 import SettingsPaymentGatewayCreem from '../../pages/Setting/Payment/SettingsPaymentGatewayCreem';
 import SettingsPaymentGatewayWaffo from '../../pages/Setting/Payment/SettingsPaymentGatewayWaffo';
 import SettingsPaymentGatewayWaffoPancake from '../../pages/Setting/Payment/SettingsPaymentGatewayWaffoPancake';
+import SettingsPaymentGatewayWCheckout from '../../pages/Setting/Payment/SettingsPaymentGatewayWCheckout';
 import { API, showError, showSuccess, toBoolean } from '../../helpers';
 import { useTranslation } from 'react-i18next';
 import RiskAcknowledgementModal from '../common/modals/RiskAcknowledgementModal';
@@ -63,6 +64,22 @@ const PaymentSetting = () => {
     WaffoPancakeCurrency: 'USD',
     WaffoPancakeUnitPrice: 1.0,
     WaffoPancakeMinTopUp: 1,
+
+    WCheckoutEnabled: false,
+    WCheckoutSandbox: true,
+    WCheckoutApiKey: '',
+    WCheckoutApiSecret: '',
+    WCheckoutSignKey: '',
+    WCheckoutSandboxApiKey: '',
+    WCheckoutSandboxApiSecret: '',
+    WCheckoutSandboxSignKey: '',
+    WCheckoutMerchantId: '',
+    WCheckoutNotifyUrl: '',
+    WCheckoutReturnUrl: '',
+    WCheckoutUnitPrice: 1.0,
+    WCheckoutMinTopUp: 1,
+    WCheckoutExpiredIn: 1800,
+    WCheckoutEnabledTokens: '',
     'payment_setting.compliance_confirmed': false,
     'payment_setting.compliance_terms_version': '',
     'payment_setting.compliance_confirmed_at': 0,
@@ -173,7 +190,13 @@ const PaymentSetting = () => {
           case 'StripeMinTopUp':
           case 'WaffoPancakeUnitPrice':
           case 'WaffoPancakeMinTopUp':
+          case 'WCheckoutUnitPrice':
+          case 'WCheckoutMinTopUp':
+          case 'WCheckoutExpiredIn':
             newInputs[item.key] = parseFloat(item.value);
+            break;
+          case 'WCheckoutSandbox':
+            newInputs[item.key] = toBoolean(item.value);
             break;
           case 'WaffoPancakeMerchantID':
           case 'WaffoPancakePrivateKey':
@@ -322,6 +345,13 @@ const PaymentSetting = () => {
               </Tabs.TabPane>
               <Tabs.TabPane tab={t('Waffo 设置')} itemKey='waffo'>
                 <SettingsPaymentGatewayWaffo
+                  options={inputs}
+                  refresh={onRefresh}
+                  hideSectionTitle
+                />
+              </Tabs.TabPane>
+              <Tabs.TabPane tab={t('WCheckout 设置')} itemKey='wcheckout'>
+                <SettingsPaymentGatewayWCheckout
                   options={inputs}
                   refresh={onRefresh}
                   hideSectionTitle

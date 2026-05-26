@@ -101,6 +101,34 @@ func isWaffoPancakeWebhookEnabled() bool {
 	return isWaffoPancakeTopUpEnabled()
 }
 
+// isWCheckoutTopUpEnabled reports whether the WCheckout (stablecoin) gateway
+// is fully configured for the current sandbox/production mode and allowed to
+// accept top-ups.
+func isWCheckoutTopUpEnabled() bool {
+	if !isPaymentComplianceConfirmed() {
+		return false
+	}
+	if !setting.WCheckoutEnabled {
+		return false
+	}
+	return isWCheckoutWebhookConfigured()
+}
+
+func isWCheckoutWebhookConfigured() bool {
+	if setting.WCheckoutSandbox {
+		return strings.TrimSpace(setting.WCheckoutSandboxApiKey) != "" &&
+			strings.TrimSpace(setting.WCheckoutSandboxApiSecret) != "" &&
+			strings.TrimSpace(setting.WCheckoutSandboxSignKey) != ""
+	}
+	return strings.TrimSpace(setting.WCheckoutApiKey) != "" &&
+		strings.TrimSpace(setting.WCheckoutApiSecret) != "" &&
+		strings.TrimSpace(setting.WCheckoutSignKey) != ""
+}
+
+func isWCheckoutWebhookEnabled() bool {
+	return isWCheckoutTopUpEnabled()
+}
+
 func isEpayTopUpEnabled() bool {
 	if !isPaymentComplianceConfirmed() {
 		return false

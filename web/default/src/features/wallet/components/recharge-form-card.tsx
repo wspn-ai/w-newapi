@@ -47,6 +47,7 @@ import type {
   TopupInfo,
   CreemProduct,
   WaffoPayMethod,
+  WCheckoutToken,
 } from '../types'
 import { CreemProductsSection } from './creem-products-section'
 
@@ -78,6 +79,10 @@ interface RechargeFormCardProps {
   waffoMinTopup?: number
   onWaffoMethodSelect?: (method: WaffoPayMethod, index: number) => void
   enableWaffoPancakeTopup?: boolean
+  enableWCheckoutTopup?: boolean
+  wcheckoutTokens?: WCheckoutToken[]
+  wcheckoutMinTopup?: number
+  onWCheckoutTokenSelect?: (token: WCheckoutToken, index: number) => void
 }
 
 export function RechargeFormCard({
@@ -108,6 +113,10 @@ export function RechargeFormCard({
   waffoMinTopup,
   onWaffoMethodSelect,
   enableWaffoPancakeTopup,
+  enableWCheckoutTopup,
+  wcheckoutTokens,
+  wcheckoutMinTopup,
+  onWCheckoutTokenSelect,
 }: RechargeFormCardProps) {
   const { t } = useTranslation()
   const [localAmount, setLocalAmount] = useState(topupAmount.toString())
@@ -128,12 +137,15 @@ export function RechargeFormCard({
     topupInfo?.enable_online_topup ||
     topupInfo?.enable_stripe_topup ||
     enableWaffoTopup ||
-    enableWaffoPancakeTopup
+    enableWaffoPancakeTopup ||
+    enableWCheckoutTopup
   const hasAnyTopup = hasConfigurableTopup || enableCreemTopup
   const hasStandardPaymentMethods =
     Array.isArray(topupInfo?.pay_methods) && topupInfo.pay_methods.length > 0
   const hasWaffoPaymentMethods =
     Array.isArray(waffoPayMethods) && waffoPayMethods.length > 0
+  const hasWCheckoutTokens =
+    Array.isArray(wcheckoutTokens) && wcheckoutTokens.length > 0
   const minTopup = getMinTopupAmount(topupInfo)
   const redemptionEnabled = topupInfo?.enable_redemption !== false
 
@@ -351,7 +363,7 @@ export function RechargeFormCard({
                       )
                     })}
                   </div>
-                ) : hasWaffoPaymentMethods ? null : (
+                ) : hasWaffoPaymentMethods || hasWCheckoutTokens ? null : (
                   <Alert>
                     <AlertDescription>
                       {t(
@@ -405,6 +417,63 @@ export function RechargeFormCard({
                               <TooltipContent>
                                 {t('Minimum topup amount: {{amount}}', {
                                   amount: waffoMin,
+                                })}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          button
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+              {enableWCheckoutTopup &&
+                hasWCheckoutTokens &&
+                onWCheckoutTokenSelect && (
+                  <div className='space-y-2.5 sm:space-y-3'>
+                    <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
+                      {t('WCheckout Payment (Stablecoin)')}
+                    </Label>
+                    <div className='grid grid-cols-2 gap-1.5 sm:gap-3 lg:grid-cols-3'>
+                      {wcheckoutTokens?.map((tok, index) => {
+                        const loadingKey = `wcheckout-${index}`
+                        const wcMin = wcheckoutMinTopup || 0
+                        const belowMin = wcMin > topupAmount
+
+                        const button = (
+                          <Button
+                            key={`${tok.token}-${index}`}
+                            variant='outline'
+                            onClick={() =>
+                              onWCheckoutTokenSelect(tok, index)
+                            }
+                            disabled={belowMin || !!paymentLoading}
+                            className='h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
+                          >
+                            {paymentLoading === loadingKey ? (
+                              <Loader2 className='h-4 w-4 animate-spin' />
+                            ) : tok.icon ? (
+                              <img
+                                src={tok.icon}
+                                alt={tok.name}
+                                className='h-4 w-4 object-contain'
+                              />
+                            ) : (
+                              getPaymentIcon('waffo')
+                            )}
+                            <span className='truncate'>{tok.name}</span>
+                          </Button>
+                        )
+
+                        return belowMin ? (
+                          <TooltipProvider key={`${tok.token}-${index}`}>
+                            <Tooltip>
+                              <TooltipTrigger render={button}></TooltipTrigger>
+                              <TooltipContent>
+                                {t('Minimum topup amount: {{amount}}', {
+                                  amount: wcMin,
                                 })}
                               </TooltipContent>
                             </Tooltip>

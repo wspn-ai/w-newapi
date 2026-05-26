@@ -191,6 +191,23 @@ const BILLING_SECTIONS = [
           WaffoPancakeUnitPrice: settings.WaffoPancakeUnitPrice ?? 1,
           WaffoPancakeMinTopUp: settings.WaffoPancakeMinTopUp ?? 1,
         }}
+        wcheckoutDefaultValues={{
+          WCheckoutEnabled: settings.WCheckoutEnabled ?? false,
+          WCheckoutSandbox: settings.WCheckoutSandbox ?? true,
+          WCheckoutApiKey: settings.WCheckoutApiKey ?? '',
+          WCheckoutApiSecret: settings.WCheckoutApiSecret ?? '',
+          WCheckoutSignKey: settings.WCheckoutSignKey ?? '',
+          WCheckoutSandboxApiKey: settings.WCheckoutSandboxApiKey ?? '',
+          WCheckoutSandboxApiSecret: settings.WCheckoutSandboxApiSecret ?? '',
+          WCheckoutSandboxSignKey: settings.WCheckoutSandboxSignKey ?? '',
+          WCheckoutMerchantId: settings.WCheckoutMerchantId ?? '',
+          WCheckoutNotifyUrl: settings.WCheckoutNotifyUrl ?? '',
+          WCheckoutReturnUrl: settings.WCheckoutReturnUrl ?? '',
+          WCheckoutUnitPrice: settings.WCheckoutUnitPrice ?? 1,
+          WCheckoutMinTopUp: settings.WCheckoutMinTopUp ?? 1,
+          WCheckoutExpiredIn: settings.WCheckoutExpiredIn ?? 1800,
+          WCheckoutEnabledTokens: settings.WCheckoutEnabledTokens ?? '[]',
+        }}
         complianceDefaults={{
           confirmed: settings['payment_setting.compliance_confirmed'] ?? false,
           termsVersion:

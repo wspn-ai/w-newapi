@@ -268,6 +268,21 @@ export type BillingSettings = {
   WaffoPancakeCurrency: string
   WaffoPancakeUnitPrice: number
   WaffoPancakeMinTopUp: number
+  WCheckoutEnabled: boolean
+  WCheckoutSandbox: boolean
+  WCheckoutApiKey: string
+  WCheckoutApiSecret: string
+  WCheckoutSignKey: string
+  WCheckoutSandboxApiKey: string
+  WCheckoutSandboxApiSecret: string
+  WCheckoutSandboxSignKey: string
+  WCheckoutMerchantId: string
+  WCheckoutNotifyUrl: string
+  WCheckoutReturnUrl: string
+  WCheckoutUnitPrice: number
+  WCheckoutMinTopUp: number
+  WCheckoutExpiredIn: number
+  WCheckoutEnabledTokens: string
   'checkin_setting.enabled': boolean
   'checkin_setting.min_quota': number
   'checkin_setting.max_quota': number
