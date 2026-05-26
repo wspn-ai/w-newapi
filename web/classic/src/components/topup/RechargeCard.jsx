@@ -364,6 +364,9 @@ const RechargeCard = ({
                                         height: 18,
                                         objectFit: 'contain',
                                       }}
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
                                     />
                                   ) : payMethod.type === 'waffo_pancake' ? (
                                     <img

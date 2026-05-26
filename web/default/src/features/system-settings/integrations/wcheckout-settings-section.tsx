@@ -366,6 +366,10 @@ export function WCheckoutSettingsSection(props: Props) {
                           src={tok.icon}
                           alt={tok.name}
                           className='h-6 w-6 rounded object-contain'
+                          onError={(e) => {
+                            ;(e.currentTarget as HTMLImageElement).style.display =
+                              'none'
+                          }}
                         />
                       ) : (
                         <span className='text-muted-foreground'>-</span>
