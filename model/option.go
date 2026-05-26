@@ -114,6 +114,22 @@ func InitOptionMap() {
 	common.OptionMap["WaffoPancakeMinTopUp"] = strconv.Itoa(setting.WaffoPancakeMinTopUp)
 	common.OptionMap["WaffoPancakeStoreID"] = setting.WaffoPancakeStoreID
 	common.OptionMap["WaffoPancakeProductID"] = setting.WaffoPancakeProductID
+	// WCheckout (stablecoin payment) options. See setting/payment_wcheckout.go.
+	common.OptionMap["WCheckoutEnabled"] = strconv.FormatBool(setting.WCheckoutEnabled)
+	common.OptionMap["WCheckoutSandbox"] = strconv.FormatBool(setting.WCheckoutSandbox)
+	common.OptionMap["WCheckoutApiKey"] = setting.WCheckoutApiKey
+	common.OptionMap["WCheckoutApiSecret"] = setting.WCheckoutApiSecret
+	common.OptionMap["WCheckoutSignKey"] = setting.WCheckoutSignKey
+	common.OptionMap["WCheckoutSandboxApiKey"] = setting.WCheckoutSandboxApiKey
+	common.OptionMap["WCheckoutSandboxApiSecret"] = setting.WCheckoutSandboxApiSecret
+	common.OptionMap["WCheckoutSandboxSignKey"] = setting.WCheckoutSandboxSignKey
+	common.OptionMap["WCheckoutMerchantId"] = setting.WCheckoutMerchantId
+	common.OptionMap["WCheckoutNotifyUrl"] = setting.WCheckoutNotifyUrl
+	common.OptionMap["WCheckoutReturnUrl"] = setting.WCheckoutReturnUrl
+	common.OptionMap["WCheckoutUnitPrice"] = strconv.FormatFloat(setting.WCheckoutUnitPrice, 'f', -1, 64)
+	common.OptionMap["WCheckoutMinTopUp"] = strconv.Itoa(setting.WCheckoutMinTopUp)
+	common.OptionMap["WCheckoutExpiredIn"] = strconv.Itoa(setting.WCheckoutExpiredIn)
+	common.OptionMap["WCheckoutEnabledTokens"] = setting.WCheckoutTokens2JsonString()
 	common.OptionMap["TopupGroupRatio"] = common.TopupGroupRatio2JSONString()
 	common.OptionMap["Chats"] = setting.Chats2JsonString()
 	common.OptionMap["AutoGroups"] = setting.AutoGroups2JsonString()
@@ -462,6 +478,37 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.WaffoPancakeUnitPrice, _ = strconv.ParseFloat(value, 64)
 	case "WaffoPancakeMinTopUp":
 		setting.WaffoPancakeMinTopUp, _ = strconv.Atoi(value)
+	case "WCheckoutEnabled":
+		setting.WCheckoutEnabled = value == "true"
+	case "WCheckoutSandbox":
+		setting.WCheckoutSandbox = value == "true"
+	case "WCheckoutApiKey":
+		setting.WCheckoutApiKey = value
+	case "WCheckoutApiSecret":
+		setting.WCheckoutApiSecret = value
+	case "WCheckoutSignKey":
+		setting.WCheckoutSignKey = value
+	case "WCheckoutSandboxApiKey":
+		setting.WCheckoutSandboxApiKey = value
+	case "WCheckoutSandboxApiSecret":
+		setting.WCheckoutSandboxApiSecret = value
+	case "WCheckoutSandboxSignKey":
+		setting.WCheckoutSandboxSignKey = value
+	case "WCheckoutMerchantId":
+		setting.WCheckoutMerchantId = value
+	case "WCheckoutNotifyUrl":
+		setting.WCheckoutNotifyUrl = value
+	case "WCheckoutReturnUrl":
+		setting.WCheckoutReturnUrl = value
+	case "WCheckoutUnitPrice":
+		setting.WCheckoutUnitPrice, _ = strconv.ParseFloat(value, 64)
+	case "WCheckoutMinTopUp":
+		setting.WCheckoutMinTopUp, _ = strconv.Atoi(value)
+	case "WCheckoutExpiredIn":
+		setting.WCheckoutExpiredIn, _ = strconv.Atoi(value)
+	case "WCheckoutEnabledTokens":
+		// Read directly from OptionMap via setting.GetWCheckoutTokens(); no
+		// in-memory mirror needed.
 	case "TopupGroupRatio":
 		err = common.UpdateTopupGroupRatioByJSONString(value)
 	case "GitHubClientId":

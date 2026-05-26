@@ -76,6 +76,10 @@ import {
   WaffoSettingsSection,
   type WaffoSettingsValues,
 } from './waffo-settings-section'
+import {
+  WCheckoutSettingsSection,
+  type WCheckoutSettingsValues,
+} from './wcheckout-settings-section'
 
 const paymentSchema = z.object({
   PayAddress: z.string().refine((value) => {
@@ -182,6 +186,7 @@ type PaymentSettingsSectionProps = {
   waffoPancakeDefaultValues: WaffoPancakeSettingsValues
   waffoPancakeProvisionedStoreID?: string
   waffoPancakeProvisionedProductID?: string
+  wcheckoutDefaultValues: WCheckoutSettingsValues
   complianceDefaults: PaymentComplianceDefaults
 }
 
@@ -200,6 +205,7 @@ export function PaymentSettingsSection({
   waffoPancakeDefaultValues,
   waffoPancakeProvisionedStoreID,
   waffoPancakeProvisionedProductID,
+  wcheckoutDefaultValues,
   complianceDefaults,
 }: PaymentSettingsSectionProps) {
   const { t } = useTranslation()
@@ -1544,6 +1550,10 @@ export function PaymentSettingsSection({
           />
         </SettingsForm>
       </Form>
+
+      <Separator />
+
+      <WCheckoutSettingsSection defaultValues={wcheckoutDefaultValues} />
     </SettingsSection>
   )
 }

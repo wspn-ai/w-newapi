@@ -40,6 +40,7 @@ import {
   useWaffoPayment,
   useWaffoPancakePayment,
 } from './hooks'
+import { useWCheckoutPayment } from './hooks/use-wcheckout-payment'
 import {
   getDefaultPaymentType,
   getMinTopupAmount,
@@ -102,6 +103,7 @@ export function Wallet(props: WalletProps) {
   const { processWaffoPayment } = useWaffoPayment()
   const { processing: pancakeProcessing, processWaffoPancakePayment } =
     useWaffoPancakePayment()
+  const { processWCheckoutPayment } = useWCheckoutPayment()
 
   // Fetch and refresh user data
   const fetchUser = useCallback(async () => {
@@ -245,6 +247,19 @@ export function Wallet(props: WalletProps) {
     }
   }
 
+  const handleWCheckoutTokenSelect = async (
+    token: { token: string },
+    index: number
+  ) => {
+    const loadingKey = `wcheckout-${index}`
+    setPaymentLoading(loadingKey)
+    try {
+      await processWCheckoutPayment(topupAmount, token.token)
+    } finally {
+      setPaymentLoading(null)
+    }
+  }
+
   // Get discount rate for current topup amount
   const getDiscountRate = useCallback(() => {
     return topupInfo?.discount?.[topupAmount] || DEFAULT_DISCOUNT_RATE
@@ -303,6 +318,10 @@ export function Wallet(props: WalletProps) {
                   enableWaffoPancakeTopup={
                     topupInfo?.enable_waffo_pancake_topup
                   }
+                  enableWCheckoutTopup={topupInfo?.enable_wcheckout_topup}
+                  wcheckoutTokens={topupInfo?.wcheckout_tokens}
+                  wcheckoutMinTopup={topupInfo?.wcheckout_min_topup}
+                  onWCheckoutTokenSelect={handleWCheckoutTokenSelect}
                 />
               </div>
 
