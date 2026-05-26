@@ -95,24 +95,12 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	// WCheckout is intentionally NOT added to pay_methods. It needs a
+	// dedicated selection page (chain + token picker) and would fail if it
+	// routed through the generic /api/user/pay flow. The frontend reads
+	// enable_wcheckout_topup / wcheckout_min_topup below and renders its own
+	// section that navigates to /wallet/wcheckout.
 	enableWCheckout := isWCheckoutTopUpEnabled()
-	if enableWCheckout {
-		hasWCheckout := false
-		for _, method := range payMethods {
-			if method["type"] == model.PaymentMethodWCheckout {
-				hasWCheckout = true
-				break
-			}
-		}
-		if !hasWCheckout {
-			payMethods = append(payMethods, map[string]string{
-				"name":      "WCheckout (Stablecoin)",
-				"type":      model.PaymentMethodWCheckout,
-				"color":     "rgba(var(--semi-green-5), 1)",
-				"min_topup": strconv.Itoa(setting.WCheckoutMinTopUp),
-			})
-		}
-	}
 
 	data := gin.H{
 		"enable_online_topup":              isEpayTopUpEnabled(),
