@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useQueryClient } from '@tanstack/react-query'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -42,8 +43,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { updateSystemOption } from '../api'
 import { SettingsSection } from '../components/settings-section'
-import { useUpdateOption } from '../hooks/use-update-option'
 
 export interface WCheckoutSettingsValues {
   WCheckoutEnabled: boolean
@@ -75,7 +76,7 @@ interface Props {
 
 export function WCheckoutSettingsSection(props: Props) {
   const { t } = useTranslation()
-  const updateOption = useUpdateOption()
+  const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
 
   const form = useForm<Omit<WCheckoutSettingsValues, 'WCheckoutEnabledTokens'>>(
@@ -160,9 +161,16 @@ export function WCheckoutSettingsSection(props: Props) {
           value: values.WCheckoutSandboxSignKey,
         })
 
-      for (const opt of options) {
-        await updateOption.mutateAsync(opt)
+      // Calling the raw API in sequence so the upstream useUpdateOption hook's
+      // per-call success toast doesn't fire once per field. We show a single
+      // toast at the end and invalidate the cache ourselves.
+      const results = await Promise.all(options.map((opt) => updateSystemOption(opt)))
+      const failed = results.find((r) => !r.success)
+      if (failed) {
+        toast.error(failed.message || t('Update failed'))
+        return
       }
+      queryClient.invalidateQueries({ queryKey: ['system-options'] })
       toast.success(t('Updated successfully'))
     } catch {
       toast.error(t('Update failed'))
