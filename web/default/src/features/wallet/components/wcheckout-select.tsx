@@ -139,7 +139,13 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
 
   const handlePay = async () => {
     if (!tokenId || !amountValid || processing) return
-    await processWCheckoutPayment(amount, tokenId)
+    const ok = await processWCheckoutPayment(amount, tokenId)
+    if (ok) {
+      // Payment page opened in a new tab; return this tab to the wallet with
+      // the top-up history expanded so the user sees the new pending order
+      // (credited by webhook/reconciliation once paid).
+      void navigate({ to: '/wallet', search: { show_history: true } })
+    }
   }
 
   const handleBack = () => {
