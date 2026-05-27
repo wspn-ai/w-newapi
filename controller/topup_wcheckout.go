@@ -116,8 +116,9 @@ func RequestWCheckoutPay(c *gin.Context) {
 	}
 
 	// Unique merchant order id. The same value is reused as the WCheckout
-	// orderNo so log/webhook trails line up.
-	tradeNo := fmt.Sprintf("WCHK-%d-%d-%s", id, time.Now().UnixMilli(), randstr.String(6))
+	// orderNo so log/webhook trails line up. WCheckout requires orderNo to be
+	// alphanumeric only (retcode=00008), so no separators here.
+	tradeNo := fmt.Sprintf("WCHK%d%d%s", id, time.Now().UnixMilli(), randstr.String(6))
 
 	// Token mode: normalise Amount to the equivalent USD/CNY units so
 	// RechargeWCheckout does not double-scale quota during settlement.
