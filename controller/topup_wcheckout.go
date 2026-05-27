@@ -299,12 +299,12 @@ func handleWCheckoutOrderChanged(c *gin.Context, event *WCheckoutWebhookEvent) {
 }
 
 // sendWCheckoutWebhookResponse writes the documented {retcode, retmsg} ack
-// payload. WCheckout treats anything other than retcode "200" as a delivery
-// failure and will retry.
+// payload. retcode is an INTEGER per docs (developer.wcheckout.app/7443464m0);
+// WCheckout treats anything other than 200 as a delivery failure and retries.
 func sendWCheckoutWebhookResponse(c *gin.Context, success bool, msg string) {
-	body := gin.H{"retcode": "200", "retmsg": "SUCCESS"}
-	if !success {
-		body = gin.H{"retcode": "500", "retmsg": msg}
+	if success {
+		c.JSON(http.StatusOK, gin.H{"retcode": 200, "retmsg": "SUCCESS"})
+		return
 	}
-	c.JSON(http.StatusOK, body)
+	c.JSON(http.StatusOK, gin.H{"retcode": 500, "retmsg": msg})
 }
