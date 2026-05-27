@@ -41,6 +41,14 @@ jobs:
           bun install
           VITE_REACT_APP_VERSION=$VERSION bun run build
           cd ../..
+      - name: Build Frontend (aurora)
+        env:
+          CI: ""
+        run: |
+          cd web/aurora
+          bun install
+          DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$VERSION bun run build
+          cd ../..
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
@@ -99,6 +107,14 @@ jobs:
           bun install
           VITE_REACT_APP_VERSION=$VERSION bun run build
           cd ../..
+      - name: Build Frontend (aurora)
+        env:
+          CI: ""
+        run: |
+          cd web/aurora
+          bun install
+          DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$VERSION bun run build
+          cd ../..
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
@@ -153,6 +169,14 @@ jobs:
           cd web/classic
           bun install
           VITE_REACT_APP_VERSION=$VERSION bun run build
+          cd ../..
+      - name: Build Frontend (aurora)
+        env:
+          CI: ""
+        run: |
+          cd web/aurora
+          bun install
+          DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$VERSION bun run build
           cd ../..
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5

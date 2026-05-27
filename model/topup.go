@@ -71,6 +71,17 @@ func GetTopUpById(id int) *TopUp {
 	return topUp
 }
 
+// GetPendingTopUpsByProvider returns pending top-ups for a payment provider
+// created at or after sinceUnix (capped at 500). Used by reconciliation
+// pollers to recover orders whose webhook was never delivered.
+func GetPendingTopUpsByProvider(provider string, sinceUnix int64) ([]*TopUp, error) {
+	var topups []*TopUp
+	err := DB.Where("payment_provider = ? AND status = ? AND create_time >= ?",
+		provider, common.TopUpStatusPending, sinceUnix).
+		Order("id desc").Limit(500).Find(&topups).Error
+	return topups, err
+}
+
 func GetTopUpByTradeNo(tradeNo string) *TopUp {
 	var topUp *TopUp
 	var err error
