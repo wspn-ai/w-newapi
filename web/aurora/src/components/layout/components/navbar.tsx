@@ -19,13 +19,24 @@ For commercial licensing, please contact support@quantumnous.com
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-export function Navbar({ className, ...props }: React.ComponentProps<'nav'>) {
+export function Navbar({ className, children, ...props }: React.ComponentProps<'nav'>) {
   return (
     <nav
       data-slot='navbar'
-      className={cn('flex items-center justify-between py-4', className)}
+      className={cn(
+        'relative flex items-center justify-between py-4',
+        'bg-background/70 backdrop-blur-md supports-[backdrop-filter]:bg-background/60',
+        className
+      )}
       {...props}
-    />
+    >
+      {children}
+      <div
+        aria-hidden
+        className='pointer-events-none absolute inset-x-0 bottom-0 h-px'
+        style={{ background: 'var(--brand-gradient)' }}
+      />
+    </nav>
   )
 }
 
