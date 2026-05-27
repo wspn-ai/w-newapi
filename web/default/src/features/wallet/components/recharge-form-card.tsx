@@ -17,7 +17,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useState, useEffect } from 'react'
-import { Gift, ExternalLink, Loader2, Receipt, WalletCards } from 'lucide-react'
+import {
+  Gift,
+  ExternalLink,
+  Loader2,
+  Receipt,
+  WalletCards,
+  Coins,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from '@tanstack/react-router'
 import { formatNumber } from '@/lib/format'
@@ -314,8 +321,44 @@ export function RechargeFormCard({
                 <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
                   {t('Payment Method')}
                 </Label>
-                {hasStandardPaymentMethods ? (
+                {hasStandardPaymentMethods || enableWCheckoutTopup ? (
                   <div className='grid grid-cols-2 gap-1.5 sm:gap-3 lg:grid-cols-3'>
+                    {enableWCheckoutTopup &&
+                      (() => {
+                        const wcMin = wcheckoutMinTopup || 0
+                        const belowMin = wcMin > topupAmount
+                        const button = (
+                          <Button
+                            key='__stablecoin'
+                            variant='outline'
+                            onClick={() =>
+                              void navigate({
+                                to: '/wallet/wcheckout',
+                                search: { amount: topupAmount },
+                              })
+                            }
+                            disabled={belowMin || !!paymentLoading}
+                            className='h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
+                          >
+                            <Coins className='h-4 w-4' />
+                            <span className='truncate'>{t('Stablecoin Pay')}</span>
+                          </Button>
+                        )
+                        return belowMin ? (
+                          <TooltipProvider key='__stablecoin'>
+                            <Tooltip>
+                              <TooltipTrigger render={button}></TooltipTrigger>
+                              <TooltipContent>
+                                {t('Minimum topup amount: {{amount}}', {
+                                  amount: wcMin,
+                                })}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ) : (
+                          button
+                        )
+                      })()}
                     {topupInfo?.pay_methods?.map((method) => {
                       const minTopup = method.min_topup || 0
                       const disabled = minTopup > topupAmount
@@ -358,7 +401,7 @@ export function RechargeFormCard({
                       )
                     })}
                   </div>
-                ) : hasWaffoPaymentMethods || enableWCheckoutTopup ? null : (
+                ) : hasWaffoPaymentMethods ? null : (
                   <Alert>
                     <AlertDescription>
                       {t(
@@ -424,49 +467,6 @@ export function RechargeFormCard({
                   </div>
                 )}
 
-              {enableWCheckoutTopup && (
-                <div className='space-y-2.5 sm:space-y-3'>
-                  <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                    {t('WCheckout Payment (Stablecoin)')}
-                  </Label>
-                  {(() => {
-                    const wcMin = wcheckoutMinTopup || 0
-                    const belowMin = wcMin > topupAmount
-                    const button = (
-                      <Button
-                        variant='outline'
-                        onClick={() =>
-                          void navigate({
-                            to: '/wallet/wcheckout',
-                            search: { amount: topupAmount },
-                          })
-                        }
-                        disabled={belowMin || !!paymentLoading}
-                        className='h-9 w-full min-w-0 justify-center gap-2 rounded-lg px-3 sm:w-auto'
-                      >
-                        {getPaymentIcon('waffo')}
-                        <span className='truncate'>
-                          {t('Pay with stablecoin (USDT/USDC/WUSD)')}
-                        </span>
-                      </Button>
-                    )
-                    return belowMin ? (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger render={button}></TooltipTrigger>
-                          <TooltipContent>
-                            {t('Minimum topup amount: {{amount}}', {
-                              amount: wcMin,
-                            })}
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    ) : (
-                      button
-                    )
-                  })()}
-                </div>
-              )}
             </>
           )}
         </div>
