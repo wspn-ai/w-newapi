@@ -53,7 +53,7 @@ import { useUpdateOption } from '../hooks/use-update-option'
 
 const _systemInfoSchema = z.object({
   theme: z.object({
-    frontend: z.enum(['default', 'classic']),
+    frontend: z.enum(['default', 'classic', 'aurora']),
   }),
   SystemName: z.string().min(1),
   ServerAddress: z.string().optional(),
@@ -85,7 +85,11 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
   const normalizedDefaults: SystemInfoFormValues = {
     theme: {
       frontend:
-        defaultValues.theme?.frontend === 'classic' ? 'classic' : 'default',
+        defaultValues.theme?.frontend === 'classic'
+          ? 'classic'
+          : defaultValues.theme?.frontend === 'aurora'
+            ? 'aurora'
+            : 'default',
     },
     SystemName: normalizeValue(defaultValues.SystemName),
     ServerAddress: normalizeValue(defaultValues.ServerAddress),
@@ -101,7 +105,7 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
 
   const systemInfoSchemaWithI18n = z.object({
     theme: z.object({
-      frontend: z.enum(['default', 'classic']),
+      frontend: z.enum(['default', 'classic', 'aurora']),
     }),
     SystemName: z.string().min(1, {
       error: () => t('System name is required'),
@@ -170,6 +174,10 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                           value: 'classic',
                           label: t('Classic (Legacy Frontend)'),
                         },
+                        {
+                          value: 'aurora',
+                          label: t('Aurora'),
+                        },
                       ]}
                       onValueChange={field.onChange}
                       value={field.value}
@@ -186,6 +194,9 @@ export function SystemInfoSection({ defaultValues }: SystemInfoSectionProps) {
                           </SelectItem>
                           <SelectItem value='classic'>
                             {t('Classic (Legacy Frontend)')}
+                          </SelectItem>
+                          <SelectItem value='aurora'>
+                            {t('Aurora')}
                           </SelectItem>
                         </SelectGroup>
                       </SelectContent>
