@@ -116,14 +116,32 @@ function NavBadge({ children }: { children: ReactNode }) {
 }
 
 /**
+ * Gradient active indicator bar shown on the left edge of the active sidebar item
+ */
+function ActiveIndicator() {
+  return (
+    <span
+      aria-hidden
+      className='absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full pointer-events-none'
+      style={{
+        background: 'var(--brand-gradient)',
+        boxShadow: '0 0 12px var(--primary)',
+      }}
+    />
+  )
+}
+
+/**
  * Sidebar menu link item
  */
 function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
   const { setOpenMobile } = useSidebar()
+  const isActive = checkIsActive(href, item)
   return (
     <SidebarMenuItem>
+      {isActive && <ActiveIndicator />}
       <SidebarMenuButton
-        isActive={checkIsActive(href, item)}
+        isActive={isActive}
         tooltip={item.title}
         render={<Link to={item.url} onClick={() => setOpenMobile(false)} />}
       >
@@ -177,20 +195,29 @@ function SidebarMenuCollapsible({
       </CollapsibleTrigger>
       <CollapsibleContent className='CollapsibleContent'>
         <SidebarMenuSub>
-          {item.items.map((subItem) => (
-            <SidebarMenuSubItem key={subItem.title}>
-              <SidebarMenuSubButton
-                isActive={checkIsActive(href, subItem)}
-                render={
-                  <Link to={subItem.url} onClick={() => setOpenMobile(false)} />
-                }
-              >
-                {subItem.icon && <subItem.icon className='shrink-0' />}
-                <span className='min-w-0 flex-1 truncate'>{subItem.title}</span>
-                {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
-              </SidebarMenuSubButton>
-            </SidebarMenuSubItem>
-          ))}
+          {item.items.map((subItem) => {
+            const isSubActive = checkIsActive(href, subItem)
+            return (
+              <SidebarMenuSubItem key={subItem.title}>
+                {isSubActive && <ActiveIndicator />}
+                <SidebarMenuSubButton
+                  isActive={isSubActive}
+                  render={
+                    <Link
+                      to={subItem.url}
+                      onClick={() => setOpenMobile(false)}
+                    />
+                  }
+                >
+                  {subItem.icon && <subItem.icon className='shrink-0' />}
+                  <span className='min-w-0 flex-1 truncate'>
+                    {subItem.title}
+                  </span>
+                  {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            )
+          })}
         </SidebarMenuSub>
       </CollapsibleContent>
     </Collapsible>
