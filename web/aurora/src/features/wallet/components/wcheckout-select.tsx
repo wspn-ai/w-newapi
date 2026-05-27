@@ -175,7 +175,7 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
             {t('Back to wallet')}
           </Button>
 
-          <Card>
+          <Card className='bg-card/70 backdrop-blur-sm border-border/60'>
             <CardHeader>
               <CardTitle className='flex items-center justify-between'>
                 <span>{t('Top-up amount')}</span>
@@ -272,6 +272,7 @@ export function WCheckoutSelect({ amount }: WCheckoutSelectProps) {
                     disabled={!tokenId || !amountValid || processing}
                     className='w-full'
                     size='lg'
+                    style={(!tokenId || !amountValid || processing) ? undefined : { background: 'var(--brand-gradient)', color: 'white' }}
                   >
                     {processing ? (
                       <>

@@ -146,7 +146,7 @@ export function RechargeFormCard({
 
   if (loading) {
     return (
-      <Card className='gap-0 overflow-hidden py-0'>
+      <Card className='gap-0 overflow-hidden py-0 bg-card/70 backdrop-blur-sm border-border/60'>
         <CardHeader className='border-b p-3 !pb-3 sm:p-5 sm:!pb-5'>
           <Skeleton className='h-6 w-32' />
           <Skeleton className='mt-2 h-4 w-48' />
@@ -198,6 +198,7 @@ export function RechargeFormCard({
       title={t('Add Funds')}
       description={t('Choose an amount and payment method')}
       icon={<WalletCards className='h-4 w-4' />}
+      className='bg-card/70 backdrop-blur-sm border-border/60'
       action={
         onOpenBilling ? (
           <Button
@@ -443,6 +444,7 @@ export function RechargeFormCard({
                         }
                         disabled={belowMin || !!paymentLoading}
                         className='h-9 w-full min-w-0 justify-center gap-2 rounded-lg px-3 sm:w-auto'
+                        style={(belowMin || !!paymentLoading) ? undefined : { background: 'var(--brand-gradient)', color: 'white' }}
                       >
                         {getPaymentIcon('waffo')}
                         <span className='truncate'>
