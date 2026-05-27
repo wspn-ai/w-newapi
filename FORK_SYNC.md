@@ -216,6 +216,7 @@ additive integration touchpoints need re-merge attention on upstream sync:
 | `router/web-router.go` | `ThemeAssets` aurora 字段 + `NoRoute` 分支 |
 | `common/embed-file-system.go` | `themeAwareFileSystem` 中的第三个 FS |
 | `common/constants.go` | `SetTheme` 接受 `"aurora"` |
+| `controller/option.go` | `theme.frontend` 保存校验放行 `"aurora"` |
 | `Dockerfile` | `builder-aurora` 阶段 + `COPY dist` |
 | `.github/workflows/release.yml` | aurora 构建步骤 |
 | `web/default/.../system-settings/general/system-info-section.tsx` | 主题选择器中的 aurora 选项 |
