@@ -131,6 +131,9 @@ func main() {
 	// Channel upstream model update check task
 	controller.StartChannelUpstreamModelUpdateTask()
 
+	// WCheckout order reconciliation poller (safety net for lost webhooks)
+	controller.StartWCheckoutReconcileTask()
+
 	if common.IsMasterNode && constant.UpdateTask {
 		gopool.Go(func() {
 			controller.UpdateMidjourneyTaskBulk()

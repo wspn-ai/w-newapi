@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -307,4 +308,84 @@ func sendWCheckoutWebhookResponse(c *gin.Context, success bool, msg string) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"retcode": 500, "retmsg": msg})
+}
+
+// wcheckoutReconcileInterval is how often pending orders are polled.
+const wcheckoutReconcileInterval = 30 * time.Second
+
+// wcheckoutReconcileWindow bounds which pending orders are polled — anything
+// older than this is assumed abandoned/expired and left alone.
+const wcheckoutReconcileWindow = 2 * time.Hour
+
+// StartWCheckoutReconcileTask launches a background poller that recovers
+// WCheckout top-ups whose webhook never arrived. Webhook delivery from the
+// WCheckout side has proven unreliable in some network setups, so we actively
+// query order status as a safety net. Idempotent: RechargeWCheckout no-ops on
+// already-credited orders, so this is safe alongside live webhooks.
+func StartWCheckoutReconcileTask() {
+	go func() {
+		ticker := time.NewTicker(wcheckoutReconcileInterval)
+		defer ticker.Stop()
+		for range ticker.C {
+			reconcileWCheckoutOrders()
+		}
+	}()
+}
+
+func reconcileWCheckoutOrders() {
+	// Only the master node polls — replicas would just duplicate the work.
+	if !common.IsMasterNode {
+		return
+	}
+	if !isWCheckoutTopUpEnabled() {
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			common.SysError(fmt.Sprintf("wcheckout reconcile panic: %v", r))
+		}
+	}()
+
+	since := time.Now().Add(-wcheckoutReconcileWindow).Unix()
+	pending, err := model.GetPendingTopUpsByProvider(model.PaymentProviderWCheckout, since)
+	if err != nil {
+		common.SysError("wcheckout reconcile: query pending failed: " + err.Error())
+		return
+	}
+	if len(pending) == 0 {
+		return
+	}
+
+	client, err := service.GetWCheckoutClient()
+	if err != nil {
+		common.SysError("wcheckout reconcile: client init failed: " + err.Error())
+		return
+	}
+
+	ctx := context.Background()
+	for _, topUp := range pending {
+		info, infoErr := client.GetCheckoutOrderInfo(ctx, topUp.TradeNo)
+		if infoErr != nil {
+			// Order may not be queryable yet; try again next tick.
+			continue
+		}
+		switch info.OrderStatus {
+		case service.WCheckoutOrderStatusPaid:
+			LockOrder(topUp.TradeNo)
+			if rErr := model.RechargeWCheckout(topUp.TradeNo, "reconcile"); rErr != nil {
+				logger.LogError(ctx, fmt.Sprintf("WCheckout 对账补单失败 trade_no=%s error=%q", topUp.TradeNo, rErr.Error()))
+			} else {
+				logger.LogInfo(ctx, fmt.Sprintf("WCheckout 对账补单成功 trade_no=%s", topUp.TradeNo))
+			}
+			UnlockOrder(topUp.TradeNo)
+		case service.WCheckoutOrderStatusCancelled,
+			service.WCheckoutOrderStatusTimeout:
+			if uErr := model.UpdatePendingTopUpStatus(topUp.TradeNo, model.PaymentProviderWCheckout, common.TopUpStatusFailed); uErr != nil &&
+				!errors.Is(uErr, model.ErrTopUpNotFound) &&
+				!errors.Is(uErr, model.ErrTopUpStatusInvalid) {
+				logger.LogError(ctx, fmt.Sprintf("WCheckout 对账标记失败 trade_no=%s error=%q", topUp.TradeNo, uErr.Error()))
+			}
+		}
+	}
 }
