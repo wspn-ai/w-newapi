@@ -338,7 +338,7 @@ export function RechargeFormCard({
                               })
                             }
                             disabled={belowMin || !!paymentLoading}
-                            className='h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
+                            className='border-primary/60 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary h-9 min-w-0 justify-start gap-2 rounded-lg px-3'
                           >
                             <Coins className='h-4 w-4' />
                             <span className='truncate'>{t('Stablecoin Pay')}</span>
