@@ -47,6 +47,12 @@ var classicBuildFS embed.FS
 //go:embed web/classic/dist/index.html
 var classicIndexPage []byte
 
+//go:embed web/aurora/dist
+var auroraBuildFS embed.FS
+
+//go:embed web/aurora/dist/index.html
+var auroraIndexPage []byte
+
 func main() {
 	startTime := time.Now()
 
@@ -198,6 +204,8 @@ func main() {
 		DefaultIndexPage: indexPage,
 		ClassicBuildFS:   classicBuildFS,
 		ClassicIndexPage: classicIndexPage,
+		AuroraBuildFS:    auroraBuildFS,
+		AuroraIndexPage:  auroraIndexPage,
 	})
 	var port = os.Getenv("PORT")
 	if port == "" {

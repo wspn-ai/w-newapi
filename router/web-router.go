@@ -19,12 +19,15 @@ type ThemeAssets struct {
 	DefaultIndexPage []byte
 	ClassicBuildFS   embed.FS
 	ClassicIndexPage []byte
+	AuroraBuildFS    embed.FS
+	AuroraIndexPage  []byte
 }
 
 func SetWebRouter(router *gin.Engine, assets ThemeAssets) {
 	defaultFS := common.EmbedFolder(assets.DefaultBuildFS, "web/default/dist")
 	classicFS := common.EmbedFolder(assets.ClassicBuildFS, "web/classic/dist")
-	themeFS := common.NewThemeAwareFS(defaultFS, classicFS)
+	auroraFS := common.EmbedFolder(assets.AuroraBuildFS, "web/aurora/dist")
+	themeFS := common.NewThemeAwareFS(defaultFS, classicFS, auroraFS)
 
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
 	router.Use(middleware.GlobalWebRateLimit())
@@ -39,6 +42,8 @@ func SetWebRouter(router *gin.Engine, assets ThemeAssets) {
 		c.Header("Cache-Control", "no-cache")
 		if common.GetTheme() == "classic" {
 			c.Data(http.StatusOK, "text/html; charset=utf-8", assets.ClassicIndexPage)
+		} else if common.GetTheme() == "aurora" {
+			c.Data(http.StatusOK, "text/html; charset=utf-8", assets.AuroraIndexPage)
 		} else {
 			c.Data(http.StatusOK, "text/html; charset=utf-8", assets.DefaultIndexPage)
 		}
