@@ -4411,6 +4411,7 @@
     "TRON": "波场",
     "Solana": "Solana",
     "Stablecoin": "稳定币",
+    "Stablecoin Pay": "稳定币支付",
     "Chain": "公链",
     "Select a chain": "选择公链",
     "{{token}} is only available on {{chain}}.": "{{token}} 仅支持 {{chain}}。",
