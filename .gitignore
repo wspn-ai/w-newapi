@@ -38,3 +38,8 @@ skills-lock.json
 
 # Brainstorming visual companion artifacts
 .superpowers/
+openrouter_model_ratio.json
+openrouter_cache_ratio.json
+openrouter_completion_ratio.json
+openrouter_model_mapping.json
+openrouter_models_list.txt
